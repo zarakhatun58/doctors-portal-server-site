@@ -188,7 +188,7 @@ app.listen(port, () => {
 });
 
 /*
-// data pauar jnno
+// data get all time
 app.get('/users')
 //brand new data post
 app.post('/users')
