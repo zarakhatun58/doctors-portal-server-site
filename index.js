@@ -5,7 +5,9 @@ const admin = require("firebase-admin");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
+
 const ObjectId = require("mongodb").ObjectId;
+const stripe = require("stripe")(process.env.STRIPE_SECRET)
 const port = process.env.PORT || 5000;
 
 //7. doctors-portal-ae96f-firebase-adminsdk.json
@@ -78,6 +80,8 @@ async function run() {
       res.json(appointments);
       // console.log(appointments)
     });
+    
+    //9.get for appointment id for payment
 
     app.get("/appointments/:id", async (req, res) => {
       const id = req.params.id;
@@ -95,15 +99,15 @@ async function run() {
       // console.log(result)
       // res.json(result)
     });
-
-    app.put("/appointments/:id", async (req, res) => {
+//11. update appointment 
+    app.put('/appointments/:id', async (req, res) => {
       const id = req.params.id;
       const payment = req.body;
       const filter = { _id: ObjectId(id) };
       const updateDoc = {
         $set: {
           payment: payment,
-        },
+        }
       };
       const result = await appointmentsCollection.updateOne(filter, updateDoc);
       res.json(result);
@@ -172,6 +176,30 @@ async function run() {
           res.status(403).json({ message: 'you do not have access to make admin' })
       }
     });
+    // 10. app.post for payment currency
+    // app.post('/create-payment-intent', async (req, res)=>{
+    // const paymentInfo=req.body;
+    // const amount=paymentInfo.price*100;
+    // const paymentIntent =await stripe.paymentIntents.create({
+    // currency:'usd',
+    // amount:amount,
+    // payment_method_types:['card']
+    
+    // });
+    // res.json({  clientSecret: paymentIntent.client_secret})
+    // });
+    
+    app.post('/create-payment-intent', async (req, res) => {
+      const paymentInfo = req.body;
+      const amount = paymentInfo.price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+          currency: 'usd',
+          amount: amount,
+          payment_method_types: ['card']
+      });
+      res.json({ clientSecret: paymentIntent.client_secret })
+  })
+    
   } finally {
     // //await client.close();
   }
